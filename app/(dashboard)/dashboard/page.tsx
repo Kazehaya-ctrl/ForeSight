@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
+import {
+	format,
+	startOfWeek,
+	endOfWeek,
+	startOfMonth,
+	endOfMonth,
+	startOfYear,
+	endOfYear,
+} from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,15 +41,13 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 import { CalendarIcon, DownloadIcon, Zap } from "lucide-react";
-// import { ThemeToggle } from "@/components/theme-toggle";
-// import {
-// 	Popover,
-// 	PopoverContent,
-// 	PopoverTrigger,
-// } from "@/components/ui/popover";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// Mock data for demonstration
 const energyData = [
 	{ date: "2023-01", actual: 1000, predicted: 950 },
 	{ date: "2023-02", actual: 1200, predicted: 1150 },
@@ -52,15 +58,40 @@ const energyData = [
 	{ date: "2023-07", actual: null, predicted: 1650 },
 	{ date: "2023-08", actual: null, predicted: 1750 },
 	{ date: "2023-09", actual: null, predicted: 1850 },
+	{ date: "2023-10", actual: null, predicted: 1850 },
+	{ date: "2023-11", actual: null, predicted: 1850 },
+	{ date: "2023-12", actual: null, predicted: 1850 },
 ];
 
 export default function EnergyDashboard() {
-	const [date, setDate] = useState<Date | undefined>(new Date());
+	const [selectedTimeframe, setSelectedTimeframe] = useState("daily");
+	const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+	const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+	const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+	const [selectedYear, setSelectedYear] = useState<Date>(new Date());
+
+	const formatTimeframeDisplay = () => {
+		switch (selectedTimeframe) {
+			case "daily":
+				return format(selectedDate, "PPP");
+			case "weekly":
+				return `${format(startOfWeek(selectedWeek), "PPP")} - ${format(
+					endOfWeek(selectedWeek),
+					"PPP"
+				)}`;
+			case "monthly":
+				return format(selectedMonth, "MMMM yyyy");
+			case "yearly":
+				return format(selectedYear, "yyyy");
+			default:
+				return "Select a timeframe";
+		}
+	};
 
 	return (
-		<div className="min-h-screen bg-background text-foreground">
-			<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-				<div className="container flex h-14 items-center">
+		<div className="min-h-screen bg-background text-foreground font-serif">
+			<header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+				<div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-14 items-center">
 					<div className="mr-4 hidden md:flex">
 						<a className="mr-6 flex items-center space-x-2" href="/">
 							<Zap className="h-6 w-6" />
@@ -107,19 +138,21 @@ export default function EnergyDashboard() {
 								</kbd>
 							</button>
 						</div>
-						{/* <ThemeToggle /> */}
 					</div>
 				</div>
 			</header>
 
-			<div className="container py-6 md:py-10">
+			<div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 md:py-10">
 				<div className="flex flex-col space-y-6">
 					<div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
 						<h1 className="text-3xl font-bold tracking-tight">
 							Energy Consumption Dashboard
 						</h1>
 						<div className="flex items-center space-x-4">
-							<Select>
+							<Select
+								onValueChange={setSelectedTimeframe}
+								value={selectedTimeframe}
+							>
 								<SelectTrigger className="w-[180px]">
 									<SelectValue placeholder="Select timeframe" />
 								</SelectTrigger>
@@ -130,33 +163,61 @@ export default function EnergyDashboard() {
 									<SelectItem value="yearly">Yearly</SelectItem>
 								</SelectContent>
 							</Select>
-							{/* <Popover>
+							<Popover>
 								<PopoverTrigger asChild>
 									<Button
 										variant={"outline"}
 										className={cn(
 											"w-[240px] justify-start text-left font-normal",
-											!date && "text-muted-foreground"
+											!selectedDate && "text-muted-foreground"
 										)}
 									>
 										<CalendarIcon className="mr-2 h-4 w-4" />
-										{date ? format(date, "PPP") : <span>Pick a date</span>}
+										{formatTimeframeDisplay()}
 									</Button>
 								</PopoverTrigger>
 								<PopoverContent className="w-auto p-0" align="start">
-									<Calendar
-										mode="single"
-										selected={date}
-										onSelect={setDate}
-										initialFocus
-									/>
+									<div className="bg-background/80 backdrop-blur-sm rounded-md p-3">
+										{selectedTimeframe === "daily" && (
+											<Calendar
+												mode="single"
+												selected={selectedDate}
+												onSelect={(date) => date && setSelectedDate(date)}
+												initialFocus
+											/>
+										)}
+										{selectedTimeframe === "weekly" && (
+											<Calendar
+												mode="single"
+												selected={selectedWeek}
+												onSelect={(date) => date && setSelectedWeek(date)}
+												initialFocus
+											/>
+										)}
+										{selectedTimeframe === "monthly" && (
+											<Calendar
+												mode="single"
+												selected={selectedMonth}
+												onSelect={(date) => date && setSelectedMonth(date)}
+												initialFocus
+											/>
+										)}
+										{selectedTimeframe === "yearly" && (
+											<Calendar
+												mode="single"
+												selected={selectedYear}
+												onSelect={(date) => date && setSelectedYear(date)}
+												initialFocus
+											/>
+										)}
+									</div>
 								</PopoverContent>
-							</Popover> */}
+							</Popover>
 						</div>
 					</div>
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-						<Card>
+						<Card className="border-gray-200 dark:border-gray-800">
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 								<CardTitle className="text-sm font-medium">
 									Total Consumption
@@ -170,7 +231,7 @@ export default function EnergyDashboard() {
 								</p>
 							</CardContent>
 						</Card>
-						<Card>
+						<Card className="border-gray-200 dark:border-gray-800">
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 								<CardTitle className="text-sm font-medium">
 									Predicted Consumption
@@ -184,7 +245,7 @@ export default function EnergyDashboard() {
 								</p>
 							</CardContent>
 						</Card>
-						<Card>
+						<Card className="border-gray-200 dark:border-gray-800">
 							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 								<CardTitle className="text-sm font-medium">
 									Efficiency Score
@@ -200,7 +261,7 @@ export default function EnergyDashboard() {
 						</Card>
 					</div>
 
-					<Card>
+					<Card className="border-gray-200 dark:border-gray-800">
 						<CardHeader>
 							<CardTitle>Energy Consumption Trend</CardTitle>
 						</CardHeader>
@@ -235,7 +296,7 @@ export default function EnergyDashboard() {
 					</Card>
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<Card>
+						<Card className="border-gray-200 dark:border-gray-800">
 							<CardHeader>
 								<CardTitle>Consumption by Source</CardTitle>
 							</CardHeader>
@@ -263,7 +324,7 @@ export default function EnergyDashboard() {
 								</ResponsiveContainer>
 							</CardContent>
 						</Card>
-						<Card>
+						<Card className="border-gray-200 dark:border-gray-800">
 							<CardHeader>
 								<CardTitle>Efficiency Recommendations</CardTitle>
 							</CardHeader>
@@ -292,7 +353,7 @@ export default function EnergyDashboard() {
 						</Card>
 					</div>
 
-					<Card>
+					<Card className="border-gray-200 dark:border-gray-800">
 						<CardHeader className="flex flex-row items-center justify-between">
 							<CardTitle>Detailed Consumption Data</CardTitle>
 							<Button variant="outline" className="flex items-center">
