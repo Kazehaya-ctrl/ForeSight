@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	format,
 	startOfWeek,
@@ -47,21 +47,13 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import Airesponse from "@/app/actions/gemini";
 
-const energyData = [
-	{ date: "2023-01", actual: 1000, predicted: 950 },
-	{ date: "2023-02", actual: 1200, predicted: 1150 },
-	{ date: "2023-03", actual: 1100, predicted: 1050 },
-	{ date: "2023-04", actual: 1300, predicted: 1250 },
-	{ date: "2023-05", actual: 1400, predicted: 1350 },
-	{ date: "2023-06", actual: 1600, predicted: 1550 },
-	{ date: "2023-07", actual: null, predicted: 1650 },
-	{ date: "2023-08", actual: null, predicted: 1750 },
-	{ date: "2023-09", actual: null, predicted: 1850 },
-	{ date: "2023-10", actual: null, predicted: 1850 },
-	{ date: "2023-11", actual: null, predicted: 1850 },
-	{ date: "2023-12", actual: null, predicted: 1850 },
-];
+interface aiResposneSchema {
+	date: string;
+	actual: number;
+	predicted: number;
+}
 
 export default function EnergyDashboard() {
 	const [selectedTimeframe, setSelectedTimeframe] = useState("daily");
@@ -69,6 +61,28 @@ export default function EnergyDashboard() {
 	const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
 	const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
 	const [selectedYear, setSelectedYear] = useState<Date>(new Date());
+	const [energyData, setEnergyDate] = useState<Array<aiResposneSchema>>([]);
+	const [totalConsumption, setTotalConsumption] = useState<number>();
+	const [predictedConsumption, setPredictedConsumption] = useState<number>();
+
+	useEffect(() => {
+		const fetchdata = async () => {
+			const response = await fetch("http://localhost:4000/gemini");
+			const data = await response.json();
+			console.log(data.array);
+			setEnergyDate(data.array);
+
+			let overAllConsumptiontoDate: number = 0;
+			data.array.map((element: aiResposneSchema) => {
+				overAllConsumptiontoDate = element.actual + overAllConsumptiontoDate;
+			});
+			setTotalConsumption(overAllConsumptiontoDate);
+
+			let overAllPredictedConsumption: number = 0;
+		};
+
+		fetchdata();
+	}, []);
 
 	const formatTimeframeDisplay = () => {
 		switch (selectedTimeframe) {
@@ -225,7 +239,7 @@ export default function EnergyDashboard() {
 								<Zap className="h-4 w-4 text-muted-foreground" />
 							</CardHeader>
 							<CardContent>
-								<div className="text-2xl font-bold">7,600 kWh</div>
+								<div className="text-2xl font-bold">{totalConsumption} kWh</div>
 								<p className="text-xs text-muted-foreground">
 									+20.1% from last month
 								</p>
